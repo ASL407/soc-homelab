@@ -1,6 +1,6 @@
 ## SOC Homelab — Part 1: Architecture & Configuration
 
-This lab runs on a Lenovo ThinkPad P53 (Intel i7, 64GB RAM, 1TB dedicated lab storage) using VMware Workstation Pro. All VMs are stored on the dedicated internal drive. Total RAM allocated across all VMs is approximately 38GB, leaving sufficient headroom for the host OS.
+I'm running this lab on a Lenovo ThinkPad P53 (Intel i7, 64GB RAM, 1TB dedicated lab storage) using VMware Workstation Pro. All VMs are stored on the dedicated internal drive. Total RAM allocated across all VMs is approximately 38GB, leaving sufficient headroom for the host OS.
 
 ---
 
