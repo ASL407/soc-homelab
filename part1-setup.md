@@ -2,29 +2,45 @@
 
 This lab runs on a Lenovo ThinkPad P53 (Intel i7, 64GB RAM, 1TB dedicated lab storage) using VMware Workstation Pro. All VMs are stored on the dedicated internal drive. Total RAM allocated across all VMs is approximately 38GB, leaving sufficient headroom for the host OS.
 
-**Kali Linux** — 16GB RAM, 4 cores. This machine serves as the attack platform and was already configured for prior penetration testing work. No changes were made to its allocation.
-**Splunk (Ubuntu Server 22.04)** — 12GB RAM, 4 cores. Ubuntu Server hosts Splunk Enterprise, which serves as the SIEM for the lab. This setup is similar to how Splunk is deployed in enterprise environments and gives more visibility into how the platform operates than a pre-built appliance would.
-**Windows Server 2022 — DC01** — 6GB RAM, 2 cores. Hosts the Active Directory domain controller. Enough resources to run AD services comfortably without over-allocating.
-**Windows 10 Education** — 4GB RAM, 2 cores. The domain-joined client machine and primary target for attack simulation. Modest allocation is appropriate since it doesn't need to do much heavy lifting.
+---
 
-**Network Architecture**
+**Kali Linux** — 16GB RAM, 4 cores. This machine serves as the attack platform and was already configured for prior penetration testing work. No changes were made to its allocation.  
+
+**Splunk (Ubuntu Server 22.04)** — 12GB RAM, 4 cores. Ubuntu Server hosts Splunk Enterprise, which serves as the SIEM for the lab. This setup is similar to how Splunk is deployed in enterprise environments and gives more visibility into how the platform operates than a pre-built appliance would.  
+
+**Windows Server 2022 — DC01** — 6GB RAM, 2 cores. Hosts the Active Directory domain controller. Enough resources to run AD services comfortably without over-allocating.  
+
+**Windows 10 Education** — 4GB RAM, 2 cores. The domain-joined client machine and primary target for attack simulation. Modest allocation is appropriate since it doesn't need to do much heavy lifting.  
+
+---
+
+**Network Architecture**  
+
 Two VMware virtual network segments simulate a realistic environment while maintaining clean separation between the attack machine and the internal network.
 VMnet1 (Host-Only) serves as the internal corporate network. The Domain Controller, Windows 10 client, and Splunk SIEM all live on this segment. Host-only means these machines can communicate with each other but have no direct internet access, which keeps the environment contained and realistic. Both Windows machines were assigned static IPs on this segment — DC01 at 192.168.135.55 and WIN10-CLIENT at 192.168.135.56. Static IPs are important here: dynamic addresses would break DNS, domain connectivity, and Splunk log attribution any time a machine rebooted.
 VMnet8 (NAT) provides internet access. Kali is the only machine with adapters on both segments — one on NAT for internet access to download tools and updates, and one on VMnet1 to reach the internal network for attack simulation. This dual-homed configuration is intentional: it mirrors how an attacker machine might operate while keeping the internal lab isolated.
 All attack traffic from Kali to the domain travels over VMnet1, and all of that traffic is visible to Splunk — which is exactly what we want for detection and log analysis.
 
-**Active Directory Setup**
+**Active Directory Setup**  
+
 Windows Server 2022 was promoted to a domain controller for a newly created forest. Before promotion the server was renamed DC01 and given a static IP on VMnet1. The AD DS and DNS roles were installed via Server Manager, and the server was promoted using the Active Directory Domain Services Configuration Wizard.
 One detail worth noting: when a server is promoted to a domain controller, the local Administrator account becomes the domain Administrator account automatically. In a real enterprise this is one of the most sensitive credentials in the environment — domain admin is the endgame for a huge number of real-world attacks, including several we'll be simulating later.
 With the domain up, the following accounts were created to simulate a realistic user environment:
+
 **jsmith** — standard domain user, low privilege. Represents a typical employee account and serves as an initial foothold target.
+
 **sjones** — helpdesk user. Slightly elevated trust in a real environment, interesting for social engineering scenarios.
+
 **madmin** — secondary domain admin. Represents the common enterprise pattern of having multiple admin accounts, and is a high-value target for privilege escalation.
-**sqlservice** — service account with domain admin privileges. This is an intentional misconfiguration that mirrors what you commonly find in real environments. Service accounts with excessive privileges are a primary target for Kerberoasting attacks, which we'll be simulating in Part 2.
+
+**sqlservice** — service account with domain admin privileges. This is an intentional misconfiguration that mirrors what you commonly find in real environments. Service accounts with excessive privileges are a primary target for Kerberoasting attacks, which I'll be simulating in Part 2.
+
 WIN10-CLIENT was joined to the domain and verified by logging in as jsmith — confirming both the domain join and user account functionality.
 
 **Splunk Deployment**
+
 Splunk Enterprise was installed on the dedicated Ubuntu Server 22.04 VM. Log collection from the Windows machines is handled by the Splunk Universal Forwarder, a lightweight agent that ships Windows events to the Splunk indexer over port 9997. Both machines forward Application, Security, and System event logs.
-To maximize the value of those logs, Sysmon was deployed on both Windows machines using the SwiftOnSecurity configuration — an industry-standard Sysmon config widely used in blue team labs and real enterprise environments. Without Sysmon, Windows event logs are fairly sparse. With it, you get detailed telemetry on process creation, network connections, registry changes, and more — exactly the kind of data that makes attack simulation meaningful from a detection standpoint.
-One thing worth noting for anyone following along: the Universal Forwarder installer writes its Windows Event Log configuration to a different path than manually created configuration files. If you configure log sources through the installer wizard, check C:\Program Files\SplunkUniversalForwarder\etc\apps\SplunkUniversalForwarder\local\inputs.conf — that's where the wizard saves its settings. Manually created inputs.conf files go in C:\Program Files\SplunkUniversalForwarder\etc\system\local\. Splunk merges both locations, so either approach works, but knowing where to look saves troubleshooting time.
+To maximize the value of those logs, Sysmon was deployed on both Windows machines using the SwiftOnSecurity configuration — an industry-standard Sysmon config widely used in blue team labs and real enterprise environments. Without Sysmon, Windows event logs are fairly sparse. With it, you get detailed telemetry on process creation, network connections, registry changes, and more — exactly the kind of data that makes attack simulation meaningful from a detection standpoint.  
+
+One thing worth noting for anyone following along: the Universal Forwarder installer writes its Windows Event Log configuration to a different path than manually created configuration files. If you configure log sources through the installer wizard, check `C:\Program Files\SplunkUniversalForwarder\etc\apps\SplunkUniversalForwarder\local\inputs.conf` — that's where the wizard saves its settings. Manually created inputs.conf files go in `C:\Program Files\SplunkUniversalForwarder\etc\system\local\`. Splunk merges both locations, so either approach works, but knowing where to look saves troubleshooting time.
 With both Windows machines confirmed as sending data to Splunk — including Sysmon telemetry — the lab is operational and ready for attack simulation.
