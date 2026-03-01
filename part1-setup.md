@@ -21,6 +21,8 @@ VMnet1 (Host-Only) serves as the internal corporate network. The Domain Controll
 VMnet8 (NAT) provides internet access. Kali is the only machine with adapters on both segments — one on NAT for internet access to download tools and updates, and one on VMnet1 to reach the internal network for attack simulation. This dual-homed configuration is intentional: it mirrors how an attacker machine might operate while keeping the internal lab isolated.
 All attack traffic from Kali to the domain travels over VMnet1, and all of that traffic is visible to Splunk — which is exactly what we want for detection and log analysis.
 
+---
+
 **Active Directory Setup**  
 
 Windows Server 2022 was promoted to a domain controller for a newly created forest. Before promotion the server was renamed DC01 and given a static IP on VMnet1. The AD DS and DNS roles were installed via Server Manager, and the server was promoted using the Active Directory Domain Services Configuration Wizard.
@@ -36,6 +38,8 @@ With the domain up, the following accounts were created to simulate a realistic 
 **sqlservice** — service account with domain admin privileges. This is an intentional misconfiguration that mirrors what you commonly find in real environments. Service accounts with excessive privileges are a primary target for Kerberoasting attacks, which I'll be simulating in Part 2.
 
 WIN10-CLIENT was joined to the domain and verified by logging in as jsmith — confirming both the domain join and user account functionality.
+
+---
 
 **Splunk Deployment**
 
