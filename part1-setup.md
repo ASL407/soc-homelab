@@ -50,7 +50,9 @@ WIN10-CLIENT was joined to the domain and verified by logging in as jsmith — c
 **Splunk Deployment**
 
 Splunk Enterprise was installed on the dedicated Ubuntu Server 22.04 VM. Log collection from the Windows machines is handled by the Splunk Universal Forwarder, a lightweight agent that ships Windows events to the Splunk indexer over port 9997. Both machines forward Application, Security, and System event logs.
+
 To maximize the value of those logs, Sysmon was deployed on both Windows machines using the SwiftOnSecurity configuration — an industry-standard Sysmon config widely used in blue team labs and real enterprise environments. Without Sysmon, Windows event logs are fairly sparse. With it, you get detailed telemetry on process creation, network connections, registry changes, and more — exactly the kind of data that makes attack simulation meaningful from a detection standpoint.  
 
 One thing worth noting for anyone following along: the Universal Forwarder installer writes its Windows Event Log configuration to a different path than manually created configuration files. If you configure log sources through the installer wizard, check `C:\Program Files\SplunkUniversalForwarder\etc\apps\SplunkUniversalForwarder\local\inputs.conf` — that's where the wizard saves its settings. Manually created inputs.conf files go in `C:\Program Files\SplunkUniversalForwarder\etc\system\local\`. Splunk merges both locations, so either approach works, but knowing where to look saves troubleshooting time.
+
 With both Windows machines confirmed as sending data to Splunk — including Sysmon telemetry — the lab is operational and ready for attack simulation.
