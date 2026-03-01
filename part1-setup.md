@@ -17,8 +17,14 @@ I'm running this lab on a Lenovo ThinkPad P53 (Intel i7, 64GB RAM, 1TB dedicated
 **Network Architecture**  
 
 Two VMware virtual network segments simulate a realistic environment while maintaining clean separation between the attack machine and the internal network.
-VMnet1 (Host-Only) serves as the internal corporate network. The Domain Controller, Windows 10 client, and Splunk SIEM all live on this segment. Host-only means these machines can communicate with each other but have no direct internet access, which keeps the environment contained and realistic. Both Windows machines were assigned static IPs on this segment — DC01 at 192.168.135.55 and WIN10-CLIENT at 192.168.135.56. Static IPs are important here: dynamic addresses would break DNS, domain connectivity, and Splunk log attribution any time a machine rebooted.
+VMnet1 (Host-Only) serves as the internal corporate network. 
+
+The Domain Controller, Windows 10 client, and Splunk SIEM all live on this segment. Host-only means these machines can communicate with each other but have no direct internet access, which keeps the environment contained and realistic. 
+
+Both Windows machines were assigned static IPs on this segment. Static IPs are important here: dynamic addresses would break DNS, domain connectivity, and Splunk log attribution any time a machine rebooted.
+
 VMnet8 (NAT) provides internet access. Kali is the only machine with adapters on both segments — one on NAT for internet access to download tools and updates, and one on VMnet1 to reach the internal network for attack simulation. This dual-homed configuration is intentional: it mirrors how an attacker machine might operate while keeping the internal lab isolated.
+
 All attack traffic from Kali to the domain travels over VMnet1, and all of that traffic is visible to Splunk — which is exactly what we want for detection and log analysis.
 
 ---
@@ -26,7 +32,7 @@ All attack traffic from Kali to the domain travels over VMnet1, and all of that 
 **Active Directory Setup**  
 
 Windows Server 2022 was promoted to a domain controller for a newly created forest. Before promotion the server was renamed DC01 and given a static IP on VMnet1. The AD DS and DNS roles were installed via Server Manager, and the server was promoted using the Active Directory Domain Services Configuration Wizard.
-One detail worth noting: when a server is promoted to a domain controller, the local Administrator account becomes the domain Administrator account automatically. In a real enterprise this is one of the most sensitive credentials in the environment — domain admin is the endgame for a huge number of real-world attacks, including several we'll be simulating later.
+
 With the domain up, the following accounts were created to simulate a realistic user environment:
 
 **jsmith** — standard domain user, low privilege. Represents a typical employee account and serves as an initial foothold target.
